@@ -4,11 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import Swal from 'sweetalert2';
 import { UserService } from './register.service';
-
+// Remove incorrect imports:
+// import { Auth, createUserWithEmailAndPassword, GoogleAuthProvider, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, signInWithPopup } from 'firebase/auth';
 
 @Component({
   selector: 'app-register2',
-  //templateUrl: './register2.component.html',
+  templateUrl: './register2.component.html',
   styleUrls: ['./register2.component.scss']
 })
 export class Register2Component implements OnInit {
@@ -28,7 +29,7 @@ export class Register2Component implements OnInit {
   loading = false;
 
   constructor(
-    private auth: Auth,
+    // Remove Auth injection from here
     private userService: UserService,
     private fb: FormBuilder,
     private router: Router
@@ -42,6 +43,7 @@ export class Register2Component implements OnInit {
   navigateToHome() {
     this.router.navigate(['/homepage']);
   }
+  
   private initializeForms() {
     this.emailForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]]
@@ -49,79 +51,20 @@ export class Register2Component implements OnInit {
 
     this.registrationForm = this.fb.group({
         username: ['', Validators.required],
-        email: [{ value: '', disabled: false }, [Validators.required, Validators.email]], // Changed disabled to false
+        email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
         organization: ['', Validators.required],
         role: ['', Validators.required],
-        password: ['', [Validators.required, Validators.minLength(6)]],
+        password: ['', [
+          Validators.required, 
+          Validators.minLength(6),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/)
+        ]],
         confirmPassword: ['', Validators.required]
     }, { validator: this.mustMatch('password', 'confirmPassword') });
-}
-
-  ngAfterViewInit() {
-    if (isSignInWithEmailLink(this.auth, window.location.href)) {
-      this.completeSignIn();
-    }
   }
 
   toggleSignInMethod(method: 'email' | 'google') {
     this.isGoogleSignIn = method;
-  }
-
-  async handleGoogleSignIn() {
-    const provider = new GoogleAuthProvider();
-    try {
-        const result = await signInWithPopup(this.auth, provider);
-        const user = result.user;
-        if (user && user.email) {
-            await user.delete();
-            this.showRegistrationForm = true;
-            this.verifiedEmail = user.email;
-            this.registrationForm.patchValue({
-                email: user.email,  // This will now work since the field isn't disabled
-                username: user.displayName || ''
-            });
-            Swal.fire('Email Verified', 'Please complete your registration.', 'success');
-        }
-    } catch (error: any) {
-        Swal.fire('Error', error.message, 'error');
-    }
-}
-
-  async sendVerificationEmail() {
-    if (this.emailForm.invalid) return;
-    this.isLoading = true;
-    const email = this.emailForm.get('email')?.value;
-    const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
-    try {
-      await sendSignInLinkToEmail(this.auth, email, actionCodeSettings);
-      localStorage.setItem('emailForSignIn', email);
-      Swal.fire('Verification Email Sent', 'Check your email for the verification link.', 'success');
-    } catch (error: any) {
-      Swal.fire('Error', error.message, 'error');
-    } finally {
-      this.isLoading = false;
-    }
-  }
-
-  async completeSignIn() {
-    const email = localStorage.getItem('emailForSignIn');
-    if (!email) {
-      Swal.fire('Error', 'No email found for sign-in.', 'error');
-      return;
-    }
-    try {
-      const result = await signInWithEmailLink(this.auth, email, window.location.href);
-      localStorage.removeItem('emailForSignIn');
-      if (result.user) {
-        await result.user.delete();
-      }
-      this.verifiedEmail = email;
-      this.showRegistrationForm = true;
-      this.registrationForm.patchValue({ email: this.verifiedEmail });
-      Swal.fire('Success', 'Email verified! Complete your registration.', 'success');
-    } catch (error: any) {
-      Swal.fire('Error', error.message, 'error');
-    }
   }
 
   get f(): { [key: string]: AbstractControl } {
@@ -161,8 +104,8 @@ export class Register2Component implements OnInit {
     this.loading = true;
     
     const formValue = {
-        ...this.registrationForm.value,
-        email: this.verifiedEmail || this.registrationForm.get('email')?.value // Use verified email or form email
+        ...this.registrationForm.getRawValue(),
+        email: this.verifiedEmail || this.registrationForm.get('email')?.value
     };
 
     try {
@@ -171,28 +114,22 @@ export class Register2Component implements OnInit {
             throw new Error('Email is required');
         }
 
-        const userCredential = await createUserWithEmailAndPassword(
-            this.auth,
+        // Use UserService to handle registration instead of doing it here
+        await this.userService.registerUser(
+            formValue.username,
             formValue.email,
-            formValue.password
+            formValue.password,
+            formValue.organization,
+            formValue.role
         );
 
-        if (userCredential.user) {
-            await this.userService.createUser({
-                uid: userCredential.user.uid,
-                email: formValue.email,
-                username: formValue.username,
-                organization: formValue.organization,
-                role: formValue.role
-            });
-
-            Swal.fire('Registration Successful', 'You can now log in.', 'success');
-            this.router.navigate(['/login']);
-        }
+        // Success message is handled by UserService
+        this.router.navigate(['/login']);
     } catch (error: any) {
-        Swal.fire('Error', error.message, 'error');
+        // Error handling is done in UserService
+        console.error('Registration error:', error);
     } finally {
         this.loading = false;
     }
-}
+  }
 }

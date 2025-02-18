@@ -8,6 +8,7 @@ import { User } from '../models/auth.models';
 //import { Bank } from 'src/app/pages/Banks/bank.models';
 //import { Dormitory, EditableBank } from 'src/app/pages/Banks/bank.models';
 
+
 @Injectable({ providedIn: 'root' })
 export class AuthfakeauthenticationService {
   
@@ -19,6 +20,8 @@ export class AuthfakeauthenticationService {
         this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('currentUser')));
         this.currentUser = this.currentUserSubject.asObservable();
     }
+
+    
 
     public get currentUserValue(): User {
         return this.currentUserSubject.value;

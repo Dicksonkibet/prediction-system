@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from './login.service';
-import { environment } from 'src/environments/environment';
+
 
 @Component({
   selector: 'app-login',

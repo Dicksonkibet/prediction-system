@@ -59,7 +59,6 @@
                     <h5 class="text-center">Create Your Account</h5>
                     <p class="text-center">Fill in the required details to get started.</p>
 
-
                     <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
                         <div class="form-group">
                             <label for="username">Username</label>
@@ -82,8 +81,7 @@
                                 class="form-control"
                                 placeholder="Enter email"
                                 [value]="verifiedEmail || ''"
-                                [ngClass]="{ 'is-invalid': submitted && f['email'].errors }"
-                                required>
+                                [ngClass]="{ 'is-invalid': submitted && f['email'].errors }">
                             
                             <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
                                 <div *ngIf="f['email'].errors['required']">Email is required</div>
@@ -91,7 +89,6 @@
                             </div>
                         </div>
                         
-
                         <div class="form-group">
                             <label for="organization">Organization</label>
                             <input 
@@ -140,7 +137,7 @@
                                 </button>
                               </div>
                             </div>
-                            <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+                            <div *ngIf="submitted && f['password'].errors" class="invalid-feedback d-block">
                               <div *ngIf="f['password'].errors['required']">Password is required</div>
                               <div *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</div>
                               <div *ngIf="f['password'].errors['pattern']">
@@ -164,38 +161,29 @@
                             </div>
                         </div>
 
-                        
-
                         <!-- Submit Button -->
-                        <!-- <button 
-                        type="submit" 
-                        class="btn btn-primary btn-block">
-                            Register
-                        </button> -->
-                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="loading">
+                            <span *ngIf="loading" class="spinner-border spinner-border-sm mr-1"></span>
                             <i class="bi bi-person-plus-fill"></i> Register
                         </button>
-                        </form> <!-- Ensure this closes the correct form tag -->
-                        </div>
+                    </form>
+                </div>
                         
-                        <!-- Navigation Buttons -->
-                        <div class="text-center mt-4">
-                            <p class="mb-2">
-                                Already have an account? 
-                                <button class="btn btn-link p-0" (click)="goToLogin()">Login</button>
-                            </p>
-                        </div></div></div>
-                        
-
-            <footer class="text-center mt-4 ">
-                <p class="text-muted footer-links">© {{year}} Credit Risk Prediction System. All rights reserved. <a href="/terms">Terms</a> | <a href="/privacy">Privacy Policy</a></p>
-            </footer>
-        
+                <!-- Navigation Buttons -->
+                <div class="text-center mt-4 mb-3">
+                    <p class="mb-2">
+                        Already have an account? 
+                        <button class="btn btn-link p-0" (click)="goToLogin()">Login</button>
+                    </p>
+                </div>
             </div>
         </div>
-    
+    </div>
 
- 
+    <footer class="text-center mt-4">
+        <p class="text-muted footer-links">© {{year}} Credit Risk Prediction System. All rights reserved. <a href="/terms">Terms</a> | <a href="/privacy">Privacy Policy</a></p>
+    </footer>
+</div>
 
 </body>
 </html>

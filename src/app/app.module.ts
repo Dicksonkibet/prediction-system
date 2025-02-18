@@ -34,16 +34,6 @@ import { FakeBackendInterceptor } from './core/helpers/fake-backend';
 import { PagesModule } from './pages/pages.module';
 import { PagesRoutingModule } from './pages/pages-routing.module';
 
-
-
-
-
-
-
-
-
-
-
 if (environment.defaultauth === 'firebase') {
   initFirebaseBackend(environment.firebaseConfig);
 } else {
@@ -95,9 +85,7 @@ export function createTranslateLoader(http: HttpClient): any {
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: FakeBackendInterceptor, multi: true },
-    // LoaderService,
-    // { provide: HTTP_INTERCEPTORS, useClass: LoaderInterceptorService, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: FakeBackendInterceptor, multi: true },  
   ],
 })
 export class AppModule { }

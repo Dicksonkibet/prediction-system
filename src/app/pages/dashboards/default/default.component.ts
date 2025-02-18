@@ -7,9 +7,11 @@ import { takeUntil, finalize } from 'rxjs/operators';
 
 // Services
 import { EventService } from '../../../core/services/event.service';
-import { AuthenticationService } from 'src/app/account/auth/login/login.service';
+
 //import { StudentsService } from '../../ecommerce/student-guardian/student.service';
 import { AuthfakeauthenticationService } from 'src/app/core/services/authfake.service';
+import { AuthenticationService } from 'src/app/core/services/auth.service';
+import { AuthService } from 'src/app/account/auth/login/login.service';
 
 // Interfaces
 interface LoadingState {
@@ -72,7 +74,7 @@ export class DefaultComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthfakeauthenticationService,
     //private studentsService: StudentsService,
-    private modalService: NgbModal,
+    private AuthService1: AuthService,
     private eventService: EventService,
     private authenticationService: AuthenticationService,
     private router: Router,
@@ -132,14 +134,15 @@ export class DefaultComponent implements OnInit, OnDestroy {
   
 
   private loadUserProfile(): void {
-    const user = this.authenticationService.getUser();
+    const user = this.AuthService1.getUser();
     if (user) {
-      this.userName = user.systemUserfullnames;
+      this.userName = localStorage.getItem('userName') || ''; // Retrieve username from localStorage
       this.loading.userProfile = false;
     } else {
       this.router.navigate(['/account/login']);
     }
   }
+  
 
   private prepareGraphData(paymentTrendChart: PaymentTrendChart[]): void {
     if (!paymentTrendChart?.length) return;

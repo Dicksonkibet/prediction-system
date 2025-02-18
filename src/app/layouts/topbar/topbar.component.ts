@@ -8,7 +8,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { LanguageService } from '../../core/services/language.service';
 import { TranslateService } from '@ngx-translate/core';
 
-import { AuthenticationService } from 'src/app/account/auth/login/login.service';
+import { AuthService } from 'src/app/account/auth/login/login.service';
 @Component({
   selector: 'app-topbar',
   templateUrl: './topbar.component.html',
@@ -30,10 +30,10 @@ export class TopbarComponent implements OnInit {
 CompanyInfo: any;
 notifications: any;
 
-  constructor(@Inject(DOCUMENT) private document: any, private router: Router, private authService: AuthenticationService,
+  constructor(@Inject(DOCUMENT) private document: any, private router: Router, private authService1: AuthService,
               private authFackservice: AuthfakeauthenticationService,
               public languageService: LanguageService,
-              private authenticationService: AuthenticationService,
+             // private authenticationService: AuthenticationService,
               public translate: TranslateService,
               public _cookiesService: CookieService) {
   }
@@ -91,13 +91,13 @@ notifications: any;
    * Logout the user
    */
   logout() {
-    this.authenticationService.logout();
+    this.authService1.logout();
     this.router.navigate(['/account/login']);
   }
 
 
   getLoggedInUser() {
-    const user = this.authenticationService.getUser();
+    const user = this.authService1.getUser();
     if (user) {
       this.userProfile = user;
       this.userName = user.systemUserfullnames; // Set the username

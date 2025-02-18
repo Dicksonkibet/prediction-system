@@ -1,23 +1,24 @@
 import { Injectable } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
-import { Firestore, collection, getDocs, query, where, CollectionReference } from '@angular/fire/firestore';
+import { Auth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from '@angular/fire/auth';
+import { Firestore, collection, getDocs, query, where, CollectionReference, collectionData } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private authStateSubject = new BehaviorSubject<boolean>(this.checkAuthState());
   authState$ = this.authStateSubject.asObservable();
 
   constructor(
-    public auth: Auth, // ✅ Inject Auth properly
-    private firestore: Firestore, // ✅ Inject Firestore properly
+    private auth: Auth,  // ✅ Ensure proper injection
+    private firestore: Firestore,  // ✅ Ensure Firestore is injected
     private router: Router
   ) {
-    this.auth.onAuthStateChanged(user => {
+    // Track auth state changes
+    onAuthStateChanged(this.auth, (user) => {
       if (user) {
         localStorage.setItem('userToken', user.uid);
         this.authStateSubject.next(true);
@@ -27,30 +28,29 @@ export class AuthService {
       }
     });
   }
+  getUser(): any {
+    return this.auth.currentUser; // Firebase method to get current user
+  }
 
   private checkAuthState(): boolean {
     return !!localStorage.getItem('userToken');
   }
 
   get isAuthenticated(): boolean {
-    return !!localStorage.getItem('userToken'); // Returns boolean instead of Observable
+    return this.checkAuthState();
   }
-  
-
   async login(email: string, password: string): Promise<void> {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
       const user = userCredential.user;
   
       const userData = await this.getUserData(email);
-      if (!userData) {
-        throw new Error('No user data found.');
-      }
+      if (!userData) throw new Error('No user data found.');
   
-      localStorage.setItem('userToken', user.uid);
-      localStorage.setItem('userRole', userData.role || 'user');
-      localStorage.setItem('userEmail', email);
-      localStorage.setItem('userName', userData.username || 'User'); //  Store username
+      this.storeUserData(user.uid, email, userData);
+  
+      // Store the username in localStorage for easy access in other components
+      localStorage.setItem('userName', userData.username || 'User'); // Save username
   
       this.authStateSubject.next(true);
   
@@ -59,12 +59,10 @@ export class AuthService {
         title: 'Login Successful',
         text: `Welcome back, ${userData.username || 'User'}!`,
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
   
-      setTimeout(() => {
-        this.router.navigate(['/dashboard']);
-      }, 1000);
+      setTimeout(() => this.router.navigate(['/dashboard']), 1000);
     } catch (error: any) {
       console.error('Login Error:', error);
       this.authStateSubject.next(false);
@@ -74,7 +72,7 @@ export class AuthService {
         title: 'Login Failed',
         text: this.getErrorMessage(error),
         timer: 3000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
   
       throw new Error(this.getErrorMessage(error));
@@ -82,6 +80,7 @@ export class AuthService {
   }
   
 
+  /** ✅ Logout Method */
   async logout(): Promise<void> {
     try {
       await signOut(this.auth);
@@ -93,7 +92,7 @@ export class AuthService {
         title: 'Logged Out',
         text: 'You have been logged out successfully.',
         timer: 2000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
 
       await this.router.navigate(['/login']);
@@ -102,18 +101,18 @@ export class AuthService {
     }
   }
 
+  /** ✅ Firestore: Fetch user data from 'users' collection */
   async getUserData(email: string): Promise<any> {
     try {
-      const usersCollection: CollectionReference = collection(this.firestore, 'users'); // Use injected Firestore instance
+      const usersCollection: CollectionReference = collection(this.firestore, 'users');
       const q = query(usersCollection, where('email', '==', email));
-      
       const querySnapshot = await getDocs(q);
   
       if (querySnapshot.empty) {
         console.error('User data not found for email:', email);
         return null;
       }
-  
+
       return querySnapshot.docs[0].data();
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -121,8 +120,15 @@ export class AuthService {
     }
   }
 
- 
+  /** ✅ Store user data locally */
+  private storeUserData(uid: string, email: string, userData: any) {
+    localStorage.setItem('userToken', uid);
+    localStorage.setItem('userRole', userData.role || 'user');
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', userData.username || 'User');
+  }
 
+  /** ✅ Handle Authentication Errors */
   private getErrorMessage(error: any): string {
     switch (error.code) {
       case 'auth/invalid-credential':
