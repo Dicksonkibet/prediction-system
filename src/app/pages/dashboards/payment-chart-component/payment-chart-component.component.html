@@ -1,0 +1,161 @@
+<div class="chart-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-spinner d-flex justify-content-center align-items-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Chart Content -->
+  <div *ngIf="!isLoading" class="chart-content">
+    <!-- Chart Header -->
+    <div class="chart-header d-flex justify-content-between align-items-center">
+      <h2 class="chart-title">{{ title }} - {{ year }}</h2>
+      <div class="summary-stats d-flex">
+        <div class="stat-card">
+          <span class="stat-label">Total Payments</span>
+          <span class="stat-value">{{ yAxisLabelFormat.format(totalPayments) }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Monthly Average</span>
+          <span class="stat-value">{{ yAxisLabelFormat.format(averagePayment) }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Months with Payments</span>
+          <span class="stat-value">{{ monthsWithPayments }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Wrapper -->
+    <div class="chart-wrapper">
+      <div class="chart-3d">
+        <svg
+          [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+          preserveAspectRatio="xMidYMid meet"
+          class="chart"
+        >
+          <!-- Grid Lines -->
+          <g class="grid-lines">
+            <ng-container *ngFor="let tick of yAxisTicks">
+              <line
+                [attr.x1]="marginLeft"
+                [attr.y1]="tick.yPosition"
+                [attr.x2]="chartWidth - marginRight"
+                [attr.y2]="tick.yPosition"
+                class="grid-line"
+              />
+            </ng-container>
+          </g>
+
+          <!-- X and Y Axes with Arrows -->
+          <g class="axes">
+            <line
+              [attr.x1]="marginLeft"
+              [attr.y1]="chartHeight - marginBottom"
+              [attr.x2]="marginLeft"
+              [attr.y2]="marginTop"
+              class="axis-line"
+            />
+            <path [attr.d]="yAxisArrowPath" class="axis-arrow" />
+            <line
+              [attr.x1]="marginLeft"
+              [attr.y1]="chartHeight - marginBottom"
+              [attr.x2]="chartWidth - marginRight"
+              [attr.y2]="chartHeight - marginBottom"
+              class="axis-line"
+            />
+            <path [attr.d]="xAxisArrowPath" class="axis-arrow" />
+          </g>
+
+          <!-- Y-Axis Ticks and Labels -->
+          <g *ngFor="let tick of yAxisTicks" class="tick-group">
+            <line
+              [attr.x1]="marginLeft - 6"
+              [attr.y1]="tick.yPosition"
+              [attr.x2]="marginLeft"
+              [attr.y2]="tick.yPosition"
+              class="tick-line"
+            />
+            <text
+              [attr.x]="getYAxisLabelPosition(tick).x"
+              [attr.y]="tick.yPosition"
+              class="tick-label"
+              alignment-baseline="middle"
+              text-anchor="end"
+            >
+              {{ yAxisLabelFormat.format(tick.value) }}
+            </text>
+          </g>
+
+          <!-- Bars -->
+          <g *ngFor="let data of chartData; let i = index" class="bar-group">
+            <rect
+              [attr.x]="getBarX(i)"
+              [attr.y]="getBarY(data.value)"
+              [attr.width]="barWidth"
+              [attr.height]="getBarHeight(data.value)"
+              class="bar"
+              [class.has-value]="data.value > 0"
+              (mouseenter)="showTooltip(data.value, $event)"
+              (mouseleave)="hideTooltip()"
+              [@barAnimation]
+            />
+            <text
+              *ngIf="data.value > 0"
+              [attr.x]="getBarX(i) + barWidth / 2"
+              [attr.y]="getBarY(data.value) - 5"
+              class="value-label"
+              text-anchor="middle"
+            >
+              {{ yAxisLabelFormat.format(data.value) }}
+            </text>
+            <text
+              [attr.x]="getBarX(i) + barWidth / 2"
+              [attr.y]="chartHeight - marginBottom + 20"
+              class="month-label"
+              text-anchor="middle"
+              [attr.transform]="'rotate(45,' + (getBarX(i) + barWidth / 2) + ',' + (chartHeight - marginBottom + 20) + ')'">
+              {{ data.month }}
+            </text>
+          </g>
+
+          <!-- Axis Titles -->
+          <text
+            [attr.x]="-chartHeight / 2"
+            [attr.y]="marginLeft / 3"
+            class="axis-title"
+            transform="rotate(-90)"
+            text-anchor="middle"
+          >
+            Payment Amount (KES)
+          </text>
+          <text
+            [attr.x]="chartWidth / 2"
+            [attr.y]="chartHeight - 10"
+            class="axis-title"
+            text-anchor="middle"
+          >
+            Month
+          </text>
+
+          <!-- Tooltip -->
+          <g *ngIf="tooltipVisible" class="tooltip">
+            <rect
+              [attr.x]="tooltipX - 5"
+              [attr.y]="tooltipY - 20"
+              rx="4"
+              ry="4"
+              width="100"
+              height="25"
+              class="tooltip-bg"
+            />
+            <text [attr.x]="tooltipX" [attr.y]="tooltipY" class="tooltip-text">
+              {{ yAxisLabelFormat.format(tooltipValue) }}
+            </text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
